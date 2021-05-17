@@ -18,6 +18,7 @@ namespace Unity.ProjectAuditor.Editor
         BuildFiles,
         BuildSteps,
         Assemblies,
+        Scenes,
 
         NumCategories
     }

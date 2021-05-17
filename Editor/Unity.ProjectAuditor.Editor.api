@@ -70,8 +70,9 @@ namespace Unity.ProjectAuditor.Editor
         public const Unity.ProjectAuditor.Editor.IssueCategory CodeCompilerMessages = 5;
         public const Unity.ProjectAuditor.Editor.IssueCategory Generics = 6;
         public const Unity.ProjectAuditor.Editor.IssueCategory MetaData = 0;
-        public const Unity.ProjectAuditor.Editor.IssueCategory NumCategories = 11;
+        public const Unity.ProjectAuditor.Editor.IssueCategory NumCategories = 12;
         public const Unity.ProjectAuditor.Editor.IssueCategory ProjectSettings = 7;
+        public const Unity.ProjectAuditor.Editor.IssueCategory Scenes = 11;
         public const Unity.ProjectAuditor.Editor.IssueCategory Shaders = 2;
         public const Unity.ProjectAuditor.Editor.IssueCategory ShaderVariants = 3;
         public int value__;
@@ -286,6 +287,17 @@ namespace Unity.ProjectAuditor.Editor.Auditors
     {
         public const Unity.ProjectAuditor.Editor.Auditors.MetaDataProperty Num = 1;
         public const Unity.ProjectAuditor.Editor.Auditors.MetaDataProperty Value = 0;
+        public int value__;
+    }
+
+    public enum SceneProperty
+    {
+        public const Unity.ProjectAuditor.Editor.Auditors.SceneProperty Num = 5;
+        public const Unity.ProjectAuditor.Editor.Auditors.SceneProperty NumMaterials = 2;
+        public const Unity.ProjectAuditor.Editor.Auditors.SceneProperty NumObjects = 0;
+        public const Unity.ProjectAuditor.Editor.Auditors.SceneProperty NumShaders = 3;
+        public const Unity.ProjectAuditor.Editor.Auditors.SceneProperty NumTextures = 4;
+        public const Unity.ProjectAuditor.Editor.Auditors.SceneProperty NumUniquePrefabs = 1;
         public int value__;
     }
 

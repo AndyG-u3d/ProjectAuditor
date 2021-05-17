@@ -52,6 +52,7 @@ namespace Unity.ProjectAuditor.Editor.UI
             CodeCompilerMessages,
             Assemblies,
             BuildSteps,
+            Scenes
         }
 
         // -------------------------------------------------------------------------------------------------------------
@@ -160,6 +161,8 @@ namespace Unity.ProjectAuditor.Editor.UI
                     return "api_tab";
                 case UIButton.Assets:
                     return "assets_tab";
+                case UIButton.Scenes:
+                    return "scenes_tab";
                 case UIButton.Shaders:
                     return "shaders_tab";
                 case UIButton.ProjectSettings:
