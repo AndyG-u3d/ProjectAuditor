@@ -55,7 +55,7 @@ namespace Unity.ProjectAuditor.Editor.Auditors
                     m_Shaders.Add(shader, 0);
 
                 m_Shaders[shader]++;
-
+#if UNITY_2019_3_OR_NEWER
                 for (int i = 0; i < shader.GetPropertyCount(); i++)
                 {
                     if (shader.GetPropertyType(i) == ShaderPropertyType.Texture)
@@ -70,6 +70,7 @@ namespace Unity.ProjectAuditor.Editor.Auditors
                         m_Textures[texture]++;
                     }
                 }
+#endif
             }
 
             m_Stats.materials = m_Materials.Count;
