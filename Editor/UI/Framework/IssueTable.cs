@@ -9,7 +9,7 @@ using UnityEditor.IMGUI.Controls;
 using UnityEngine;
 using UnityEngine.Profiling;
 
-namespace Unity.ProjectAuditor.Editor.UI
+namespace Unity.ProjectAuditor.Editor.UI.Framework
 {
     class IssueTable : TreeView
     {
@@ -197,7 +197,7 @@ namespace Unity.ProjectAuditor.Editor.UI
             var columnType = property.type;
 
             // indent first column, if necessary
-            if (m_Desc.groupByDescriptor && columnIndex == 0)
+            if (m_Desc.groupByDescriptor && columnIndex == 0 && !m_FlatView)
             {
                 var indent = GetContentIndent(treeViewItem) + extraSpaceBeforeIconAndLabel;
                 cellRect.xMin += indent;

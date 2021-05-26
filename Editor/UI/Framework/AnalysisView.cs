@@ -9,7 +9,7 @@ using UnityEditor.IMGUI.Controls;
 using UnityEngine;
 using UnityEngine.Profiling;
 
-namespace Unity.ProjectAuditor.Editor.UI
+namespace Unity.ProjectAuditor.Editor.UI.Framework
 {
     public class AnalysisView
     {
@@ -30,9 +30,9 @@ namespace Unity.ProjectAuditor.Editor.UI
         protected Preferences m_Preferences;
         protected ViewDescriptor m_Desc;
         protected IProjectIssueFilter m_Filter;
+        protected List<ProjectIssue> m_Issues = new List<ProjectIssue>();
 
         DependencyView m_DependencyView;
-        List<ProjectIssue> m_Issues = new List<ProjectIssue>();
         bool m_FlatView;
         IssueTable m_Table;
         IssueLayout m_Layout;
@@ -108,7 +108,7 @@ namespace Unity.ProjectAuditor.Editor.UI
             SetFlatView(m_FlatView);
         }
 
-        public void AddIssues(IEnumerable<ProjectIssue> allIssues)
+        public virtual void AddIssues(IEnumerable<ProjectIssue> allIssues)
         {
             var issues = allIssues.Where(i => i.category == m_Desc.category).ToArray();
             m_Issues.AddRange(issues);
@@ -120,7 +120,7 @@ namespace Unity.ProjectAuditor.Editor.UI
             return m_Issues.ToArray();
         }
 
-        public void Clear()
+        public virtual void Clear()
         {
             m_Issues.Clear();
             m_Table.Clear();
@@ -145,7 +145,7 @@ namespace Unity.ProjectAuditor.Editor.UI
         {
         }
 
-        public void DrawTableAndPanels()
+        public virtual void DrawContent()
         {
             var selectedItems = m_Table.GetSelectedItems();
             var selectedIssues = selectedItems.Where(i => i.ProjectIssue != null).Select(i => i.ProjectIssue).ToArray();

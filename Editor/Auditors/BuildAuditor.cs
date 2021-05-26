@@ -1,3 +1,7 @@
+#if UNITY_2019_4_OR_NEWER
+    #define BUILD_REPORT_API_SUPPORTED
+#endif
+
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -25,16 +29,9 @@ namespace Unity.ProjectAuditor.Editor.Auditors
 
     class BuildAuditor : IAuditor, IPostprocessBuildWithReport
     {
-        static readonly ProblemDescriptor k_Descriptor = new ProblemDescriptor
+        static readonly ProblemDescriptor k_InfoDescriptor = new ProblemDescriptor
             (
             600000,
-            "Build file",
-            Area.BuildSize
-            );
-
-        private static readonly ProblemDescriptor k_InfoDescriptor = new ProblemDescriptor
-            (
-            600001,
             "Build step info"
             )
         {
@@ -43,7 +40,7 @@ namespace Unity.ProjectAuditor.Editor.Auditors
 
         static readonly ProblemDescriptor k_WarnDescriptor = new ProblemDescriptor
             (
-            600002,
+            600001,
             "Build step warning"
             )
         {
@@ -52,11 +49,90 @@ namespace Unity.ProjectAuditor.Editor.Auditors
 
         static readonly ProblemDescriptor k_ErrorDescriptor = new ProblemDescriptor
             (
-            600003,
+            600002,
             "Build step error"
             )
         {
             severity = Rule.Severity.Error
+        };
+
+        static readonly ProblemDescriptor k_AssetDescriptor = new ProblemDescriptor
+            (
+            600003,
+            "Asset",
+            Area.BuildSize
+            );
+
+        static readonly ProblemDescriptor k_ByteDataDescriptor = new ProblemDescriptor
+            (
+            600004,
+            "Byte data",
+            Area.BuildSize
+            );
+
+        static readonly ProblemDescriptor k_FontDescriptor = new ProblemDescriptor
+            (
+            600005,
+            "Font",
+            Area.BuildSize
+            );
+
+        static readonly ProblemDescriptor k_MaterialDescriptor = new ProblemDescriptor
+            (
+            600006,
+            "Material",
+            Area.BuildSize
+            );
+
+        static readonly ProblemDescriptor k_ModelDescriptor = new ProblemDescriptor
+            (
+            600007,
+            "Model",
+            Area.BuildSize
+            );
+
+        static readonly ProblemDescriptor k_PrefabDescriptor = new ProblemDescriptor
+            (
+            600008,
+            "Prefab",
+            Area.BuildSize
+            );
+
+        static readonly ProblemDescriptor k_ShaderDescriptor = new ProblemDescriptor
+            (
+            600009,
+            "Shader",
+            Area.BuildSize
+            );
+
+        static readonly ProblemDescriptor k_TextureDescriptor = new ProblemDescriptor
+            (
+            600010,
+            "Texture",
+            Area.BuildSize
+            );
+
+        static readonly ProblemDescriptor k_OtherTypeDescriptor = new ProblemDescriptor
+            (
+            600011,
+            "Other Type",
+            Area.BuildSize
+            );
+
+
+        readonly Dictionary<string, ProblemDescriptor> m_DescriptorByExtension = new Dictionary<string, ProblemDescriptor>()
+        {
+            { ".asset", k_AssetDescriptor },
+            { ".compute", k_ShaderDescriptor },
+            { ".shader", k_ShaderDescriptor },
+            { ".png", k_TextureDescriptor },
+            { ".tga", k_TextureDescriptor },
+            { ".exr", k_TextureDescriptor },
+            { ".mat", k_MaterialDescriptor },
+            { ".fbx", k_ModelDescriptor },
+            { ".ttf", k_FontDescriptor },
+            { ".bytes", k_ByteDataDescriptor },
+            { ".prefab", k_PrefabDescriptor },
         };
 
         static readonly IssueLayout k_FileLayout = new IssueLayout
@@ -84,14 +160,26 @@ namespace Unity.ProjectAuditor.Editor.Auditors
             hierarchy = true
         };
 
-        static BuildReport s_BuildReport;
+        const string k_BuildReportDir = "Assets/BuildReports";
+        const string k_LastBuildReportPath = "Library/LastBuild.buildreport";
 
-        const string s_BuildReportDir = "Assets/BuildReports";
-        const string s_LastBuildReportPath = "Library/LastBuild.buildreport";
+        static BuildReport s_BuildReport;
 
         public IEnumerable<ProblemDescriptor> GetDescriptors()
         {
-            yield return k_Descriptor;
+            yield return k_InfoDescriptor;
+            yield return k_WarnDescriptor;
+            yield return k_ErrorDescriptor;
+
+            yield return k_AssetDescriptor;
+            yield return k_ByteDataDescriptor;
+            yield return k_FontDescriptor;
+            yield return k_MaterialDescriptor;
+            yield return k_ModelDescriptor;
+            yield return k_PrefabDescriptor;
+            yield return k_ShaderDescriptor;
+            yield return k_TextureDescriptor;
+            yield return k_OtherTypeDescriptor;
         }
 
         public IEnumerable<IssueLayout> GetLayouts()
@@ -106,7 +194,7 @@ namespace Unity.ProjectAuditor.Editor.Auditors
 
         public bool IsSupported()
         {
-#if UNITY_2019_4_OR_NEWER
+#if BUILD_REPORT_API_SUPPORTED
             return true;
 #else
             return false;
@@ -119,7 +207,7 @@ namespace Unity.ProjectAuditor.Editor.Auditors
 
         public void Audit(Action<ProjectIssue> onIssueFound, Action onComplete = null, IProgressBar progressBar = null)
         {
-#if UNITY_2019_4_OR_NEWER
+#if BUILD_REPORT_API_SUPPORTED
             var buildReport = GetBuildReport();
             if (buildReport != null)
             {
@@ -131,13 +219,13 @@ namespace Unity.ProjectAuditor.Editor.Auditors
                 onComplete();
         }
 
-#if UNITY_2019_4_OR_NEWER
-        private static void AnalyzeBuildSteps(Action<ProjectIssue> onIssueFound, BuildReport buildReport)
+#if BUILD_REPORT_API_SUPPORTED
+        void AnalyzeBuildSteps(Action<ProjectIssue> onIssueFound, BuildReport buildReport)
         {
             foreach (var step in buildReport.steps)
             {
                 var depth = step.depth;
-                onIssueFound(new ProjectIssue(k_InfoDescriptor, step.name, IssueCategory.BuildSteps, new[]
+                onIssueFound(new ProjectIssue(k_InfoDescriptor, step.name, IssueCategory.BuildSteps, new string[(int)BuildReportStepProperty.Num]
                 {
                     Formatting.FormatTime(step.duration)
                 })
@@ -159,18 +247,15 @@ namespace Unity.ProjectAuditor.Editor.Auditors
                             descriptor = k_WarnDescriptor;
                             break;
                     }
-                    onIssueFound(new ProjectIssue(descriptor, message.content, IssueCategory.BuildSteps, new[]
+                    onIssueFound(new ProjectIssue(descriptor, message.content, IssueCategory.BuildSteps)
                     {
-                        string.Empty
-                    })
-                        {
-                            depth = depth + 1,
-                        });
+                        depth = depth + 1,
+                    });
                 }
             }
         }
 
-        private static void AnalyzePackedAssets(Action<ProjectIssue> onIssueFound, BuildReport buildReport)
+        void AnalyzePackedAssets(Action<ProjectIssue> onIssueFound, BuildReport buildReport)
         {
             foreach (var packedAsset in buildReport.packedAssets)
             {
@@ -210,8 +295,14 @@ namespace Unity.ProjectAuditor.Editor.Auditors
                         description = string.Format("{0} ({1})", assetName, entry.Value.Count);
                     else
                         description = assetName;
-                    var issue = new ProjectIssue(k_Descriptor, description, IssueCategory.BuildFiles, new Location(assetPath));
-                    issue.SetCustomProperties(new[]
+
+                    var descriptor = k_OtherTypeDescriptor;
+                    var ext = Path.GetExtension(assetPath);
+                    if (m_DescriptorByExtension.ContainsKey(ext))
+                        descriptor = m_DescriptorByExtension[ext];
+
+                    var issue = new ProjectIssue(descriptor, description, IssueCategory.BuildFiles, new Location(assetPath));
+                    issue.SetCustomProperties(new string[(int)BuildReportFileProperty.Num]
                     {
                         sum.ToString(),
                         packedAsset.shortPath
@@ -228,17 +319,17 @@ namespace Unity.ProjectAuditor.Editor.Auditors
             if (s_BuildReport != null)
                 return s_BuildReport;
 
-            if (!Directory.Exists(s_BuildReportDir))
-                Directory.CreateDirectory(s_BuildReportDir);
+            if (!Directory.Exists(k_BuildReportDir))
+                Directory.CreateDirectory(k_BuildReportDir);
 
-            var date = File.GetLastWriteTime(s_LastBuildReportPath);
-            var assetPath = s_BuildReportDir + "/Build_" + date.ToString("yyyy-MM-dd-HH-mm-ss") + ".buildreport";
+            var date = File.GetLastWriteTime(k_LastBuildReportPath);
+            var assetPath = k_BuildReportDir + "/Build_" + date.ToString("yyyy-MM-dd-HH-mm-ss") + ".buildreport";
 
             if (!File.Exists(assetPath))
             {
-                if (!File.Exists(s_LastBuildReportPath))
+                if (!File.Exists(k_LastBuildReportPath))
                     return null; // the project was never built
-                File.Copy(s_LastBuildReportPath, assetPath, true);
+                File.Copy(k_LastBuildReportPath, assetPath, true);
                 AssetDatabase.ImportAsset(assetPath);
             }
             s_BuildReport = AssetDatabase.LoadAssetAtPath<BuildReport>(assetPath);

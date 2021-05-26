@@ -5,6 +5,7 @@ using System.Linq;
 using Unity.ProjectAuditor.Editor.Auditors;
 using Unity.ProjectAuditor.Editor.CodeAnalysis;
 using Unity.ProjectAuditor.Editor.Utils;
+using Unity.ProjectAuditor.Editor.UI.Framework;
 using UnityEditor;
 using UnityEditor.Callbacks;
 using UnityEngine;
@@ -207,7 +208,7 @@ namespace Unity.ProjectAuditor.Editor.UI
                         m_ShouldRefresh = false;
                     }
 
-                    activeView.DrawTableAndPanels();
+                    activeView.DrawContent();
                 }
             }
             else
@@ -443,10 +444,10 @@ namespace Unity.ProjectAuditor.Editor.UI
             {
                 type = typeof(BuildReportView),
                 category = IssueCategory.BuildFiles,
-                name = "Build Files",
-                menuLabel = "Build Report/Files",
+                name = "Build Size",
+                menuLabel = "Build Report/Size",
                 menuOrder = 101,
-                groupByDescriptor = false,
+                groupByDescriptor = true,
                 descriptionWithIcon = true,
                 showActions = false,
                 showAssemblySelection = false,
@@ -1218,7 +1219,7 @@ In addition, it is possible to filter issues by area (CPU/Memory/etc...), by str
             public static readonly GUIContent Shaders = new GUIContent("Shaders", "Inspect Shaders");
             public static readonly GUIContent ShaderVariantsButton = new GUIContent("Variants", "Inspect Shader Variants");
 
-            public static readonly GUIContent BuildFiles = new GUIContent("Build Files");
+            public static readonly GUIContent BuildFiles = new GUIContent("Build Size");
             public static readonly GUIContent BuildSteps = new GUIContent("Build Steps");
         }
 
