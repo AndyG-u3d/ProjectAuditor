@@ -13,17 +13,17 @@ namespace Unity.ProjectAuditor.Editor.Auditors
     public enum SceneProperty
     {
         NumObjects = 0,
-        NumUniquePrefabs,
+        NumPrefabs,
         NumMaterials,
         NumShaders,
         NumTextures,
         Num
     }
 
-    struct SceneStats
+    struct AssetUsageStats
     {
         public int objects;
-        public int uniquePrefabs;
+        public int prefabs;
         public int materials;
         public int shaders;
         public int textures;
@@ -31,11 +31,11 @@ namespace Unity.ProjectAuditor.Editor.Auditors
 
     class SceneStatsCollector
     {
-        private SceneStats m_Stats;
-        readonly Dictionary<UnityEngine.Material, int> m_Materials = new Dictionary<UnityEngine.Material, int>();
-        readonly Dictionary<UnityEngine.Object, int> m_Prefabs = new Dictionary<UnityEngine.Object, int>();
-        readonly Dictionary<UnityEngine.Shader, int> m_Shaders = new Dictionary<UnityEngine.Shader, int>();
-        readonly Dictionary<UnityEngine.Texture, int> m_Textures = new Dictionary<UnityEngine.Texture, int>();
+        int m_NumObjects;
+        Dictionary<string, int> m_Materials = new Dictionary<string, int>();
+        Dictionary<string, int> m_Prefabs = new Dictionary<string, int>();
+        Dictionary<string, int> m_Shaders = new Dictionary<string, int>();
+        Dictionary<int, int> m_Textures = new Dictionary<int, int>();
 
         public void Collect(Scene scene)
         {
@@ -43,73 +43,100 @@ namespace Unity.ProjectAuditor.Editor.Auditors
             {
                 Collect(go);
             }
-
-            foreach (var pair in m_Materials)
-            {
-                var material = pair.Key;
-                var shader = pair.Key.shader;
-                if (shader == null)
-                    continue;
-
-                if (!m_Shaders.ContainsKey(shader))
-                    m_Shaders.Add(shader, 0);
-
-                m_Shaders[shader]++;
-#if UNITY_2019_3_OR_NEWER
-                for (int i = 0; i < shader.GetPropertyCount(); i++)
-                {
-                    if (shader.GetPropertyType(i) == ShaderPropertyType.Texture)
-                    {
-                        var texture = material.GetTexture(shader.GetPropertyName(i));
-                        if (texture == null)
-                            continue;
-
-                        if (!m_Textures.ContainsKey(texture))
-                            m_Textures.Add(texture, 0);
-
-                        m_Textures[texture]++;
-                    }
-                }
-#endif
-            }
-
-            m_Stats.materials = m_Materials.Count;
-            m_Stats.shaders = m_Shaders.Count;
-            m_Stats.textures = m_Textures.Count;
-            m_Stats.uniquePrefabs = m_Prefabs.Count;
         }
 
         void Collect(GameObject go)
         {
-            m_Stats.objects++;
-            var renderers = go.GetComponents<Renderer>();
-            foreach (var material in renderers.SelectMany(r => r.sharedMaterials))
-            {
-                if (material == null)
-                    continue;
+            m_NumObjects++;
 
-                if (!m_Materials.ContainsKey(material))
-                    m_Materials.Add(material, 0);
-                m_Materials[material]++;
-            }
+            CollectMaterials(go);
 
             if (PrefabUtility.GetPrefabInstanceStatus(go) != PrefabInstanceStatus.NotAPrefab)
             {
-                var prefab = PrefabUtility.GetPrefabInstanceHandle(go);
-                if (!m_Prefabs.ContainsKey(prefab))
-                    m_Prefabs.Add(prefab, 0);
+                if (PrefabUtility.GetNearestPrefabInstanceRoot(go) == go)
+                {
+                    var prefabAssetPath = PrefabUtility.GetPrefabAssetPathOfNearestInstanceRoot(go);
+                    var prefab = PrefabUtility.GetPrefabInstanceHandle(go);
+                    //var prefab = PrefabUtility.GetCorrespondingObjectFromOriginalSource(go);
+                    if (!m_Prefabs.ContainsKey(prefabAssetPath))
+                    {
+                        m_Prefabs.Add(prefabAssetPath, 0);
+                    }
 
-                m_Prefabs[prefab]++;
+                    m_Prefabs[prefabAssetPath]++;
+                }
             }
+
             foreach (Transform childTransform in go.transform)
             {
                 Collect(childTransform.gameObject);
             }
         }
 
-        public SceneStats GetStats()
+        void CollectMaterials(GameObject go)
         {
-            return m_Stats;
+            var renderers = go.GetComponents<Renderer>();
+            foreach (var material in renderers.SelectMany(r => r.sharedMaterials))
+            {
+                if (material == null)
+                    continue;
+
+                var materialPath = AssetDatabase.GetAssetPath(material);
+                if (!m_Materials.ContainsKey(materialPath))
+                {
+                    var shader = material.shader;
+                    if (shader == null)
+                        continue;
+
+                    var shaderName = shader.name;
+                    if (!m_Shaders.ContainsKey(shaderName))
+                        m_Shaders.Add(shaderName, 0);
+
+                    m_Shaders[shaderName]++;
+#if UNITY_2019_3_OR_NEWER
+                    for (int i = 0; i < shader.GetPropertyCount(); i++)
+                    {
+                        if (shader.GetPropertyType(i) == ShaderPropertyType.Texture)
+                        {
+                            var texture = material.GetTexture(shader.GetPropertyName(i));
+                            if (texture == null)
+                                continue;
+
+                            var id = texture.GetInstanceID();
+                            if (!m_Textures.ContainsKey(id))
+                                m_Textures.Add(id, 0);
+
+                            m_Textures[id]++;
+                        }
+                    }
+#endif
+                    m_Materials.Add(materialPath, 0);
+                }
+                m_Materials[materialPath]++;
+            }
+        }
+
+        public void Merge(SceneStatsCollector other)
+        {
+            m_NumObjects += other.m_NumObjects;
+            m_Materials = other.m_Materials.Concat(m_Materials).GroupBy(d => d.Key).ToDictionary(d => d.Key, d => d.First().Value);
+            m_Prefabs = other.m_Prefabs.Concat(m_Prefabs).GroupBy(d => d.Key).ToDictionary(d => d.Key, d => d.First().Value);
+            m_Shaders = other.m_Shaders.Concat(m_Shaders).GroupBy(d => d.Key).ToDictionary(d => d.Key, d => d.First().Value);
+            m_Textures = other.m_Textures.Concat(m_Textures).GroupBy(d => d.Key).ToDictionary(d => d.Key, d => d.First().Value);
+        }
+
+        public AssetUsageStats GetStats()
+        {
+            var stats = new AssetUsageStats
+            {
+                objects = m_NumObjects,
+                materials = m_Materials.Count,
+                shaders = m_Shaders.Count,
+                textures = m_Textures.Count,
+                prefabs = m_Prefabs.Count
+            };
+
+            return stats;
         }
     }
 
@@ -127,11 +154,11 @@ namespace Unity.ProjectAuditor.Editor.Auditors
             properties = new[]
             {
                 new PropertyDefinition { type = PropertyType.Description, name = "Scene Name"},
-                new PropertyDefinition { type = PropertyTypeUtil.FromCustom(SceneProperty.NumObjects), format = PropertyFormat.Integer, name = "Num Objects"},
-                new PropertyDefinition { type = PropertyTypeUtil.FromCustom(SceneProperty.NumUniquePrefabs), format = PropertyFormat.Integer, name = "Num Unique Prefabs"},
-                new PropertyDefinition { type = PropertyTypeUtil.FromCustom(SceneProperty.NumMaterials), format = PropertyFormat.Integer, name = "Num Materials"},
-                new PropertyDefinition { type = PropertyTypeUtil.FromCustom(SceneProperty.NumMaterials), format = PropertyFormat.Integer, name = "Num Shaders"},
-                new PropertyDefinition { type = PropertyTypeUtil.FromCustom(SceneProperty.NumTextures), format = PropertyFormat.Integer, name = "Num Textures"},
+                new PropertyDefinition { type = PropertyTypeUtil.FromCustom(SceneProperty.NumObjects), format = PropertyFormat.Integer, name = "Num Objects", longName = "Num Objects"},
+                new PropertyDefinition { type = PropertyTypeUtil.FromCustom(SceneProperty.NumPrefabs), format = PropertyFormat.Integer, name = "Num Prefabs", longName = "Num Unique Prefabs"},
+                new PropertyDefinition { type = PropertyTypeUtil.FromCustom(SceneProperty.NumMaterials), format = PropertyFormat.Integer, name = "Num Materials", longName = "Num Unique Materials"},
+                new PropertyDefinition { type = PropertyTypeUtil.FromCustom(SceneProperty.NumShaders), format = PropertyFormat.Integer, name = "Num Shaders", longName = "Num Unique Shaders"},
+                new PropertyDefinition { type = PropertyTypeUtil.FromCustom(SceneProperty.NumTextures), format = PropertyFormat.Integer, name = "Num Textures", longName = "Num Unique Textures"},
             }
         };
 
@@ -161,6 +188,7 @@ namespace Unity.ProjectAuditor.Editor.Auditors
 
         public void Audit(Action<ProjectIssue> onIssueFound, Action onComplete = null, IProgressBar progressBar = null)
         {
+            var globalCollector = new SceneStatsCollector();
             foreach (var editorBuildSettingsScene in EditorBuildSettings.scenes)
             {
                 var path = editorBuildSettingsScene.path;
@@ -173,6 +201,8 @@ namespace Unity.ProjectAuditor.Editor.Auditors
 
                 collector.Collect(scene);
 
+                globalCollector.Merge(collector);
+
                 var stats = collector.GetStats();
                 onIssueFound(new ProjectIssue(
                     k_Descriptor,
@@ -182,12 +212,20 @@ namespace Unity.ProjectAuditor.Editor.Auditors
                     new[]
                     {
                         stats.objects.ToString(),
-                        stats.uniquePrefabs.ToString(),
+                        stats.prefabs.ToString(),
                         stats.materials.ToString(),
                         stats.shaders.ToString(),
                         stats.textures.ToString(),
                     }));
             }
+
+            var globalStats = globalCollector.GetStats();
+
+            Debug.Log("Total GameObjects: " + globalStats.objects);
+            Debug.Log("Unique Prefabs: "  + globalStats.prefabs);
+            Debug.Log("Unique Materials: "  + globalStats.materials);
+            Debug.Log("Unique Shaders: "  + globalStats.shaders);
+            Debug.Log("Unique Textures: "  + globalStats.textures);
 
             if (onComplete != null)
                 onComplete();

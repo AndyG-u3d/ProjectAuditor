@@ -296,9 +296,9 @@ namespace Unity.ProjectAuditor.Editor.Auditors
         public const Unity.ProjectAuditor.Editor.Auditors.SceneProperty Num = 5;
         public const Unity.ProjectAuditor.Editor.Auditors.SceneProperty NumMaterials = 2;
         public const Unity.ProjectAuditor.Editor.Auditors.SceneProperty NumObjects = 0;
+        public const Unity.ProjectAuditor.Editor.Auditors.SceneProperty NumPrefabs = 1;
         public const Unity.ProjectAuditor.Editor.Auditors.SceneProperty NumShaders = 3;
         public const Unity.ProjectAuditor.Editor.Auditors.SceneProperty NumTextures = 4;
-        public const Unity.ProjectAuditor.Editor.Auditors.SceneProperty NumUniquePrefabs = 1;
         public int value__;
     }
 
