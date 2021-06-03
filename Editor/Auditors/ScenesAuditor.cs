@@ -167,7 +167,7 @@ namespace Unity.ProjectAuditor.Editor.Auditors
             "Scene Stats"
             );
 
-        static readonly IssueLayout k_IssueLayout = new IssueLayout
+        static readonly IssueLayout k_SceneLayout = new IssueLayout
         {
             category = IssueCategory.Scenes,
             properties = new[]
@@ -188,7 +188,7 @@ namespace Unity.ProjectAuditor.Editor.Auditors
 
         public IEnumerable<IssueLayout> GetLayouts()
         {
-            yield return k_IssueLayout;
+            yield return k_SceneLayout;
         }
 
         public void Initialize(ProjectAuditorConfig config)
