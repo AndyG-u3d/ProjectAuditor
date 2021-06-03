@@ -186,12 +186,18 @@ namespace Unity.ProjectAuditor.Editor.Auditors
 
         public void Audit(Action<ProjectIssue> onIssueFound, Action onComplete = null, IProgressBar progressBar = null)
         {
+            if (progressBar != null)
+                progressBar.Initialize("Analyzing Scenes in Build Settings", "Collecting statistics",
+                    EditorBuildSettings.scenes.Length);
             var prevSceneSetups =  EditorSceneManager.GetSceneManagerSetup();
 
             var globalCollector = new SceneStatsCollector();
             foreach (var editorBuildSettingsScene in EditorBuildSettings.scenes)
             {
                 var path = editorBuildSettingsScene.path;
+
+                if (progressBar != null)
+                    progressBar.AdvanceProgressBar(path);
 
                 if (!File.Exists(path))
                     continue;
@@ -229,6 +235,9 @@ namespace Unity.ProjectAuditor.Editor.Auditors
             Debug.Log("Unique Materials: "  + globalStats.materials);
             Debug.Log("Unique Shaders: "  + globalStats.shaders);
             Debug.Log("Unique Textures: "  + globalStats.textures);
+
+            if (progressBar != null)
+                progressBar.ClearProgressBar();
 
             if (onComplete != null)
                 onComplete();
