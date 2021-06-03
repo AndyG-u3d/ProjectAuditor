@@ -56,8 +56,6 @@ namespace Unity.ProjectAuditor.Editor.Auditors
                 if (PrefabUtility.GetNearestPrefabInstanceRoot(go) == go)
                 {
                     var prefabAssetPath = PrefabUtility.GetPrefabAssetPathOfNearestInstanceRoot(go);
-                    var prefab = PrefabUtility.GetPrefabInstanceHandle(go);
-                    //var prefab = PrefabUtility.GetCorrespondingObjectFromOriginalSource(go);
                     if (!m_Prefabs.ContainsKey(prefabAssetPath))
                     {
                         m_Prefabs.Add(prefabAssetPath, 0);
