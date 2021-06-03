@@ -52,6 +52,7 @@ namespace Unity.ProjectAuditor.Editor.UI.Framework
             CodeCompilerMessages,
             Assemblies,
             BuildSteps,
+            Meshes,
             Scenes
         }
 

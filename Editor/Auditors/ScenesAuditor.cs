@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using Unity.ProjectAuditor.Editor.Utils;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
@@ -10,6 +11,13 @@ using UnityEngine.SceneManagement;
 
 namespace Unity.ProjectAuditor.Editor.Auditors
 {
+    public enum MeshProperty
+    {
+        NumVertices = 0,
+        NumTriangles,
+        Num
+    }
+
     public enum SceneProperty
     {
         NumObjects = 0,
@@ -32,6 +40,12 @@ namespace Unity.ProjectAuditor.Editor.Auditors
 
     class SceneStatsCollector
     {
+        static readonly ProblemDescriptor k_Descriptor = new ProblemDescriptor
+        (
+            700003,
+            "Mesh Stats"
+        );
+
         int m_NumObjects;
         Dictionary<string, int> m_Materials = new Dictionary<string, int>();
         Dictionary<string, int> m_Meshes = new Dictionary<string, int>();
@@ -39,6 +53,8 @@ namespace Unity.ProjectAuditor.Editor.Auditors
         Dictionary<string, int> m_Prefabs = new Dictionary<string, int>();
         Dictionary<string, int> m_Shaders = new Dictionary<string, int>();
         Dictionary<int, int> m_Textures = new Dictionary<int, int>();
+
+        public Action<ProjectIssue> onIssueFound;
 
         public void Collect(Scene scene)
         {
@@ -84,6 +100,8 @@ namespace Unity.ProjectAuditor.Editor.Auditors
                     continue;
 
                 var assetPath = AssetDatabase.GetAssetPath(material);
+                if (string.IsNullOrEmpty(assetPath))
+                    continue;
                 if (!m_Materials.ContainsKey(assetPath))
                 {
                     var shader = material.shader;
@@ -127,10 +145,23 @@ namespace Unity.ProjectAuditor.Editor.Auditors
                     continue;
 
                 var assetPath = AssetDatabase.GetAssetPath(mesh);
+                if (string.IsNullOrEmpty(assetPath))
+                    continue;
                 if (!m_Models.ContainsKey(assetPath))
                 {
                     m_Models.Add(assetPath, 0);
                 }
+                m_Models[assetPath]++;
+            }
+        }
+
+        public void CollectMeshes()
+        {
+            var meshAssetPaths = AssetDatabase.FindAssets("t:model").Select(AssetDatabase.GUIDToAssetPath).ToArray();
+            foreach (var assetPath in meshAssetPaths)
+            {
+                var mesh = AssetDatabase.LoadAssetAtPath<Mesh>(assetPath);
+                onIssueFound(new ProjectIssue(k_Descriptor, mesh.name, IssueCategory.Meshes, new Location(assetPath)));
             }
         }
 
@@ -167,6 +198,17 @@ namespace Unity.ProjectAuditor.Editor.Auditors
             "Scene Stats"
             );
 
+        static readonly IssueLayout k_MeshLayout = new IssueLayout
+        {
+            category = IssueCategory.Scenes,
+            properties = new[]
+            {
+                new PropertyDefinition { type = PropertyType.Description, name = "Mesh Name"},
+                new PropertyDefinition { type = PropertyTypeUtil.FromCustom(MeshProperty.NumVertices), format = PropertyFormat.Integer, name = "Num Vertices"},
+                new PropertyDefinition { type = PropertyTypeUtil.FromCustom(MeshProperty.NumTriangles), format = PropertyFormat.Integer, name = "Num Triangles"},
+            }
+        };
+
         static readonly IssueLayout k_SceneLayout = new IssueLayout
         {
             category = IssueCategory.Scenes,
@@ -188,6 +230,7 @@ namespace Unity.ProjectAuditor.Editor.Auditors
 
         public IEnumerable<IssueLayout> GetLayouts()
         {
+            yield return k_MeshLayout;
             yield return k_SceneLayout;
         }
 
@@ -213,6 +256,10 @@ namespace Unity.ProjectAuditor.Editor.Auditors
             var prevSceneSetups =  EditorSceneManager.GetSceneManagerSetup();
 
             var globalCollector = new SceneStatsCollector();
+            globalCollector.onIssueFound = onIssueFound;
+
+            globalCollector.CollectMeshes();
+
             foreach (var editorBuildSettingsScene in EditorBuildSettings.scenes)
             {
                 var path = editorBuildSettingsScene.path;

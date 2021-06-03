@@ -13,6 +13,7 @@
         BuildFiles,
         BuildSteps,
         Assemblies,
+        Meshes,
         Scenes,
 
         NumCategories
