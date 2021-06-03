@@ -25,6 +25,7 @@ namespace Unity.ProjectAuditor.Editor.Auditors
         public int objects;
         public int prefabs;
         public int materials;
+        public int models;
         public int shaders;
         public int textures;
     }
@@ -33,6 +34,8 @@ namespace Unity.ProjectAuditor.Editor.Auditors
     {
         int m_NumObjects;
         Dictionary<string, int> m_Materials = new Dictionary<string, int>();
+        Dictionary<string, int> m_Meshes = new Dictionary<string, int>();
+        Dictionary<string, int> m_Models = new Dictionary<string, int>();
         Dictionary<string, int> m_Prefabs = new Dictionary<string, int>();
         Dictionary<string, int> m_Shaders = new Dictionary<string, int>();
         Dictionary<int, int> m_Textures = new Dictionary<int, int>();
@@ -50,6 +53,7 @@ namespace Unity.ProjectAuditor.Editor.Auditors
             m_NumObjects++;
 
             CollectMaterials(go);
+            CollectModels(go);
 
             if (PrefabUtility.GetPrefabInstanceStatus(go) != PrefabInstanceStatus.NotAPrefab)
             {
@@ -79,8 +83,8 @@ namespace Unity.ProjectAuditor.Editor.Auditors
                 if (material == null)
                     continue;
 
-                var materialPath = AssetDatabase.GetAssetPath(material);
-                if (!m_Materials.ContainsKey(materialPath))
+                var assetPath = AssetDatabase.GetAssetPath(material);
+                if (!m_Materials.ContainsKey(assetPath))
                 {
                     var shader = material.shader;
                     if (shader == null)
@@ -108,9 +112,25 @@ namespace Unity.ProjectAuditor.Editor.Auditors
                         }
                     }
 #endif
-                    m_Materials.Add(materialPath, 0);
+                    m_Materials.Add(assetPath, 0);
                 }
-                m_Materials[materialPath]++;
+                m_Materials[assetPath]++;
+            }
+        }
+
+        void CollectModels(GameObject go)
+        {
+            var meshFilters = go.GetComponents<MeshFilter>();
+            foreach (var mesh in meshFilters)
+            {
+                if (mesh == null)
+                    continue;
+
+                var assetPath = AssetDatabase.GetAssetPath(mesh);
+                if (!m_Models.ContainsKey(assetPath))
+                {
+                    m_Models.Add(assetPath, 0);
+                }
             }
         }
 
@@ -129,6 +149,7 @@ namespace Unity.ProjectAuditor.Editor.Auditors
             {
                 objects = m_NumObjects,
                 materials = m_Materials.Count,
+                models = m_Materials.Count,
                 shaders = m_Shaders.Count,
                 textures = m_Textures.Count,
                 prefabs = m_Prefabs.Count
