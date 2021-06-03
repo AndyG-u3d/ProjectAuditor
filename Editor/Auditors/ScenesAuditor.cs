@@ -186,6 +186,8 @@ namespace Unity.ProjectAuditor.Editor.Auditors
 
         public void Audit(Action<ProjectIssue> onIssueFound, Action onComplete = null, IProgressBar progressBar = null)
         {
+            var prevSceneSetups =  EditorSceneManager.GetSceneManagerSetup();
+
             var globalCollector = new SceneStatsCollector();
             foreach (var editorBuildSettingsScene in EditorBuildSettings.scenes)
             {
@@ -216,6 +218,9 @@ namespace Unity.ProjectAuditor.Editor.Auditors
                         stats.textures.ToString(),
                     }));
             }
+
+            // restore previously-loaded scenes
+            EditorSceneManager.RestoreSceneManagerSetup(prevSceneSetups);
 
             var globalStats = globalCollector.GetStats();
 
