@@ -69,10 +69,11 @@ namespace Unity.ProjectAuditor.Editor
         public const Unity.ProjectAuditor.Editor.IssueCategory Code = 4;
         public const Unity.ProjectAuditor.Editor.IssueCategory CodeCompilerMessages = 5;
         public const Unity.ProjectAuditor.Editor.IssueCategory Generics = 6;
+        public const Unity.ProjectAuditor.Editor.IssueCategory Meshes = 11;
         public const Unity.ProjectAuditor.Editor.IssueCategory MetaData = 0;
-        public const Unity.ProjectAuditor.Editor.IssueCategory NumCategories = 12;
+        public const Unity.ProjectAuditor.Editor.IssueCategory NumCategories = 13;
         public const Unity.ProjectAuditor.Editor.IssueCategory ProjectSettings = 7;
-        public const Unity.ProjectAuditor.Editor.IssueCategory Scenes = 11;
+        public const Unity.ProjectAuditor.Editor.IssueCategory Scenes = 12;
         public const Unity.ProjectAuditor.Editor.IssueCategory Shaders = 2;
         public const Unity.ProjectAuditor.Editor.IssueCategory ShaderVariants = 3;
         public int value__;
@@ -281,6 +282,16 @@ namespace Unity.ProjectAuditor.Editor.Auditors
         public const Unity.ProjectAuditor.Editor.Auditors.CompilerMessageProperty Assembly = 1;
         public const Unity.ProjectAuditor.Editor.Auditors.CompilerMessageProperty Code = 0;
         public const Unity.ProjectAuditor.Editor.Auditors.CompilerMessageProperty Num = 2;
+        public int value__;
+    }
+
+    public enum MeshProperty
+    {
+        public const Unity.ProjectAuditor.Editor.Auditors.MeshProperty IndexFormat = 0;
+        public const Unity.ProjectAuditor.Editor.Auditors.MeshProperty Num = 4;
+        public const Unity.ProjectAuditor.Editor.Auditors.MeshProperty NumIndices = 1;
+        public const Unity.ProjectAuditor.Editor.Auditors.MeshProperty NumSubMeshes = 3;
+        public const Unity.ProjectAuditor.Editor.Auditors.MeshProperty NumVertices = 2;
         public int value__;
     }
 

@@ -1,4 +1,4 @@
-﻿namespace Unity.ProjectAuditor.Editor
+namespace Unity.ProjectAuditor.Editor
 {
     public enum IssueCategory
     {
@@ -13,7 +13,7 @@
         BuildFiles,
         BuildSteps,
         Assemblies,
-        Meshes,
+        Models,
         Scenes,
 
         NumCategories

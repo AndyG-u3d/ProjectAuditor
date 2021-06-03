@@ -253,13 +253,13 @@ namespace Unity.ProjectAuditor.Editor.UI
             });
             ViewDescriptor.Register(new ViewDescriptor
             {
-                category = IssueCategory.Meshes,
-                name = "Meshes",
-                menuLabel = "Assets/Meshes",
+                category = IssueCategory.Models,
+                name = "Models",
+                menuLabel = "Assets/Models",
                 menuOrder = 2,
                 showFilters = true,
                 onDoubleClick = EditorUtil.FocusOnAssetInProjectWindow,
-                analyticsEvent = (int)ProjectAuditorAnalytics.UIButton.Scenes
+                analyticsEvent = (int)ProjectAuditorAnalytics.UIButton.Models
             });
             ViewDescriptor.Register(new ViewDescriptor
             {

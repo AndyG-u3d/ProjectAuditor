@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using Unity.ProjectAuditor.Editor.Utils;
 using UnityEditor;
 using UnityEditor.SceneManagement;
@@ -11,10 +12,12 @@ using UnityEngine.SceneManagement;
 
 namespace Unity.ProjectAuditor.Editor.Auditors
 {
-    public enum MeshProperty
+    public enum ModelProperty
     {
-        NumVertices = 0,
-        NumTriangles,
+        IndexFormat = 0,
+        NumIndices,
+        NumVertices,
+        NumSubMeshes,
         Num
     }
 
@@ -41,10 +44,10 @@ namespace Unity.ProjectAuditor.Editor.Auditors
     class SceneStatsCollector
     {
         static readonly ProblemDescriptor k_Descriptor = new ProblemDescriptor
-        (
+            (
             700003,
             "Mesh Stats"
-        );
+            );
 
         int m_NumObjects;
         Dictionary<string, int> m_Materials = new Dictionary<string, int>();
@@ -155,14 +158,29 @@ namespace Unity.ProjectAuditor.Editor.Auditors
             }
         }
 
-        public void CollectMeshes()
+        public void CollectAllModels()
         {
             var meshAssetPaths = AssetDatabase.FindAssets("t:model").Select(AssetDatabase.GUIDToAssetPath).ToArray();
             foreach (var assetPath in meshAssetPaths)
             {
                 var mesh = AssetDatabase.LoadAssetAtPath<Mesh>(assetPath);
-                onIssueFound(new ProjectIssue(k_Descriptor, mesh.name, IssueCategory.Meshes, new Location(assetPath)));
+                onIssueFound(new ProjectIssue(k_Descriptor, Path.GetFileNameWithoutExtension(assetPath), IssueCategory.Models, new Location(assetPath),
+                    new string[(int)ModelProperty.Num]
+                    {
+                        mesh.indexFormat.ToString(),
+                        CalcTotalIndices(mesh).ToString(),
+                        mesh.vertexCount.ToString(),
+                        mesh.subMeshCount.ToString()
+                    }));
             }
+        }
+
+        static int CalcTotalIndices(Mesh mesh)
+        {
+            var totalCount = 0;
+            for (var i = 0; i < mesh.subMeshCount; i++)
+                totalCount += (int)mesh.GetIndexCount(i);
+            return totalCount;
         }
 
         public void Merge(SceneStatsCollector other)
@@ -200,12 +218,15 @@ namespace Unity.ProjectAuditor.Editor.Auditors
 
         static readonly IssueLayout k_MeshLayout = new IssueLayout
         {
-            category = IssueCategory.Scenes,
+            category = IssueCategory.Models,
             properties = new[]
             {
-                new PropertyDefinition { type = PropertyType.Description, name = "Mesh Name"},
-                new PropertyDefinition { type = PropertyTypeUtil.FromCustom(MeshProperty.NumVertices), format = PropertyFormat.Integer, name = "Num Vertices"},
-                new PropertyDefinition { type = PropertyTypeUtil.FromCustom(MeshProperty.NumTriangles), format = PropertyFormat.Integer, name = "Num Triangles"},
+                new PropertyDefinition { type = PropertyType.Description, name = "Model Name"},
+                new PropertyDefinition { type = PropertyTypeUtil.FromCustom(ModelProperty.IndexFormat), format = PropertyFormat.String, name = "Index Format"},
+                new PropertyDefinition { type = PropertyTypeUtil.FromCustom(ModelProperty.NumIndices), format = PropertyFormat.Integer, name = "Num Indices"},
+                new PropertyDefinition { type = PropertyTypeUtil.FromCustom(ModelProperty.NumVertices), format = PropertyFormat.Integer, name = "Num Vertices"},
+                new PropertyDefinition { type = PropertyTypeUtil.FromCustom(ModelProperty.NumSubMeshes), format = PropertyFormat.Integer, name = "Num Sub-Meshes"},
+                new PropertyDefinition { type = PropertyType.Path, name = "Path"},
             }
         };
 
@@ -258,7 +279,7 @@ namespace Unity.ProjectAuditor.Editor.Auditors
             var globalCollector = new SceneStatsCollector();
             globalCollector.onIssueFound = onIssueFound;
 
-            globalCollector.CollectMeshes();
+            globalCollector.CollectAllModels();
 
             foreach (var editorBuildSettingsScene in EditorBuildSettings.scenes)
             {

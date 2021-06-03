@@ -147,11 +147,12 @@ namespace Unity.ProjectAuditor.Editor.UI.Framework
             public const Unity.ProjectAuditor.Editor.UI.Framework.ProjectAuditorAnalytics.UIButton Export = 1;
             public const Unity.ProjectAuditor.Editor.UI.Framework.ProjectAuditorAnalytics.UIButton Generics = 104;
             public const Unity.ProjectAuditor.Editor.UI.Framework.ProjectAuditorAnalytics.UIButton Load = 10;
+            public const Unity.ProjectAuditor.Editor.UI.Framework.ProjectAuditorAnalytics.UIButton Meshes = 110;
             public const Unity.ProjectAuditor.Editor.UI.Framework.ProjectAuditorAnalytics.UIButton Mute = 6;
             public const Unity.ProjectAuditor.Editor.UI.Framework.ProjectAuditorAnalytics.UIButton OnlyCriticalIssues = 9;
             public const Unity.ProjectAuditor.Editor.UI.Framework.ProjectAuditorAnalytics.UIButton ProjectSettings = 101;
             public const Unity.ProjectAuditor.Editor.UI.Framework.ProjectAuditorAnalytics.UIButton Save = 11;
-            public const Unity.ProjectAuditor.Editor.UI.Framework.ProjectAuditorAnalytics.UIButton Scenes = 110;
+            public const Unity.ProjectAuditor.Editor.UI.Framework.ProjectAuditorAnalytics.UIButton Scenes = 111;
             public const Unity.ProjectAuditor.Editor.UI.Framework.ProjectAuditorAnalytics.UIButton Shaders = 103;
             public const Unity.ProjectAuditor.Editor.UI.Framework.ProjectAuditorAnalytics.UIButton ShowMuted = 8;
             public const Unity.ProjectAuditor.Editor.UI.Framework.ProjectAuditorAnalytics.UIButton Summary = 106;
