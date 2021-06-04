@@ -164,6 +164,8 @@ namespace Unity.ProjectAuditor.Editor.Auditors
             foreach (var assetPath in meshAssetPaths)
             {
                 var mesh = AssetDatabase.LoadAssetAtPath<Mesh>(assetPath);
+                if (mesh == null)
+                    continue; // skip animation-only fbx
                 onIssueFound(new ProjectIssue(k_Descriptor, Path.GetFileNameWithoutExtension(assetPath), IssueCategory.Models, new Location(assetPath),
                     new string[(int)ModelProperty.Num]
                     {
