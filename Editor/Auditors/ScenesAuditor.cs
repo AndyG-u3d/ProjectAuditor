@@ -18,6 +18,7 @@ namespace Unity.ProjectAuditor.Editor.Auditors
         NumIndices,
         NumVertices,
         NumSubMeshes,
+        Readable,
         Num
     }
 
@@ -172,7 +173,8 @@ namespace Unity.ProjectAuditor.Editor.Auditors
                         mesh.indexFormat.ToString(),
                         CalcTotalIndices(mesh).ToString(),
                         mesh.vertexCount.ToString(),
-                        mesh.subMeshCount.ToString()
+                        mesh.subMeshCount.ToString(),
+                        mesh.isReadable.ToString()
                     }));
             }
         }
@@ -228,6 +230,7 @@ namespace Unity.ProjectAuditor.Editor.Auditors
                 new PropertyDefinition { type = PropertyTypeUtil.FromCustom(ModelProperty.NumIndices), format = PropertyFormat.Integer, name = "Num Indices"},
                 new PropertyDefinition { type = PropertyTypeUtil.FromCustom(ModelProperty.NumVertices), format = PropertyFormat.Integer, name = "Num Vertices"},
                 new PropertyDefinition { type = PropertyTypeUtil.FromCustom(ModelProperty.NumSubMeshes), format = PropertyFormat.Integer, name = "Num Sub-Meshes"},
+                new PropertyDefinition { type = PropertyTypeUtil.FromCustom(ModelProperty.Readable), format = PropertyFormat.Bool, name = "Readable"},
                 new PropertyDefinition { type = PropertyType.Path, name = "Path"},
             }
         };
